@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SESSION="pi5cc"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DASH="$PROJECT_DIR/src/pi5_dashboard.py"
+
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "tmux is missing. Run: sudo apt install tmux"
+  exit 1
+fi
+if ! python3 -c "import psutil, rich" >/dev/null 2>&1; then
+  echo "Python dependencies are missing. Run: ./scripts/install.sh"
+  exit 1
+fi
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  exec tmux attach-session -t "$SESSION"
+fi
+
+tmux new-session -d -s "$SESSION" -c "$HOME" "python3 '$DASH'"
+tmux split-window -v -p 35 -t "$SESSION:0" -c "$HOME"
+tmux select-pane -t "$SESSION:0.1"
+tmux set-option -t "$SESSION" -g mouse on
+tmux set-option -t "$SESSION" -g status-style "bg=colour235,fg=colour51"
+tmux set-option -t "$SESSION" -g status-left "#[fg=colour46,bold] PI5CC #[default] "
+tmux set-option -t "$SESSION" -g status-right "SSH COMMAND CENTER | %Y-%m-%d %H:%M"
+tmux attach-session -t "$SESSION"
